@@ -4,14 +4,14 @@
 ##Set-up
 library(bio3d)
 
-## Protéine d'intérêt: 6MSM 
+## Protéine d'intérêt: 6MSM (CFTR)
 pdb <- read.pdb("6MsM") #Modèle: 9703 atomes, 2 chaines (A et B); Protéine: 9466 atomes
 
 # Example 1: Basic Normal Mode Analysis
 ## Example 1A: Normal mode calculation
 
 # Calcul des modes de la protéine 
-modes <- nma(pdb)
+modes.pdb <- nma(pdb)
 # Somaire des modes (nombre total de modes = 3N où N est le nombre d'atomes de la structure)
 ## 6 premiers modes = mouvement de structure rigide avec une valeur de 0 
 print(modes)
