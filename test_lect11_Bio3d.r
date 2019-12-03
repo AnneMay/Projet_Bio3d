@@ -35,7 +35,7 @@ ca.inds <- atom.select(pdb, "calpha", chain="A")
 cab.inds <- atom.select(pdb, elety=c("CA","CB"), chain="A", resno=10:20)
 b.inds <- atom.select(pdb, "back")
 backpdb <- trim.pdb(pdb, b.inds)
-write.pdb(backpdb, file="46MSM_back.pdb")
+write.pdb(backpdb, file="6MSM_back.pdb")
 
 backpdb <- trim.pdb(pdb, "backbone")
 backpdb <- atom.select(pdb, "backbone", value=TRUE)
@@ -129,6 +129,36 @@ p ##On voit ici que la strucure 3GD7_A (et 6GJQ_A) cause la majorité de la vari
 
 pdbs2 <- trim(pdbs, row.inds = c(1:17, 19:20))
 ids2 <- basename.pdb(pdbs2$id)
+anno2 <- pdb.annotate(ids2)
+# find invariant core
+core2 <- core.find(pdbs2)
+
+# superimpose all structures to core
+pdbs2$xyz = pdbfit(pdbs2, core2)
+
+# Perform PCA
+pc.xray2 <- pca(pdbs2)
+
+# Calculate RMSD
+rd2 <- rmsd(pdbs2)
+
+# Structure-based clustering
+hc.rd <- hclust(as.dist(rd2))
+grps.rd2 <- cutree(hc.rd, k=3) 
+
+df2 <- data.frame(x=pc.xray2$z[,1], y=pc.xray2$z[,2])
+col2 <- as.factor(grps.rd2)
+
+p2 <- ggplot(df2, aes(x, y)) +
+  geom_point(aes(col=col2), size=2) +
+  xlab("PC1") +
+  ylab("PC2") +
+  scale_color_discrete(name="Clusters") + 
+  geom_text_repel(aes(label=ids2))
+
+p2
+
+
 
 #PCA
 seqID <- seqidentity(pdbs) 
@@ -142,4 +172,9 @@ plot(pc, col=grps) ##On voit ici que la strucure 3GD7_A et 6GJQ_A cause la major
 #NMA 
 modes <- nma(pdbs)
 plot(modes, pdbs, col=grps, spread=TRUE)
+
+pdf("Présentaiton.pdf")
+p 
+p2 
+dev.off()
 
