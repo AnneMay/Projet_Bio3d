@@ -138,7 +138,7 @@ modes <- nma(pdbs)
 # Structure-based clustering
 rd <- rmsd(pdbs)
 hc <- hclust(as.dist(rd))
-grps <- cutree(hc, k=4)
+grps <- cutree(hc, k=3)
 
 plot(modes, pdbs, col=grps)
 

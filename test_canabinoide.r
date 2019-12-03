@@ -1,11 +1,12 @@
 aa <- get.seq("P21554")
 blast <- blast.pdb(aa)
-hits <- plot.blast(blast, cutoff = 50) #DEfault cutoff = 368, hits = 12 
+hits <- plot.blast(blast, cutoff = 70) #DEfault cutoff = 368, hits = 12 
 #head(hits$pdb.id)
 files <- get.pdb(hits$pdb.id, path = "pdbs", split = TRUE, gzip = TRUE)
 pdbs <- pdbaln(files, fit=TRUE, web.args=list(email="anmayroy@gmail.com"))
 ids <- basename.pdb(pdbs$id)
 plot(pdbs, labels=ids)
+head(hits$pdb.id)
 
 # Calculate sequence conservation
 cons <- conserv(pdbs, method="entropy22")

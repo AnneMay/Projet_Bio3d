@@ -1,0 +1,109 @@
+---
+title: "Bio3d"
+author: "Anne-Marie"
+date: "03/12/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(bio3d)
+
+```
+
+
+## Démontration
+
+La protéine d'intérêt de notre démonstration est le récepteur de canabinoïde CBR1. Son numéro d'accession uniprot est le _P21554_, le numéro d'accession de la structure est le *6N4B*. Il s'agit d'un récepteur couplé à une protéine G qui se lie avec différents ligands. 
+
+### Modèle d'analyse des modes normaux (NMA)
+
+Référence : [_Tutoriel sur le NMA_](http://thegrantlab.org/bio3d/tutorials/normal-mode-analysis) 
+
+#### Analyse d'une seule structure
+
+Aqcuisition et lecture de la protéine
+```{r pdb1.1, results='hide'}
+pdb <- read.pdb("6N4B")
+```
+```{r pdb1.2}
+pdb
+```
+
+Cette commande nous renvoie un objet de type `pdb`. La structure de protéine sauvegardée dans cet objet contient 8368 résidus et 5 chaines (A, B, C, R et S). Les différents attribut permettent d'accéder à divers niveaux d'informations sur la structure comme l'emplacement des résidus (xyz) ou les caractéristique des différents atomes.
+
+Calcul des modes de la protéine 
+```{r pdb2, results='hide', warning=FALSE}
+modes.pdb <- nma(pdb)
+```
+```{r pdb2.1, fig.height=5}
+print(modes.pdb)
+plot(modes.pdb, sse=pdb)
+```
+
+
+Somaire des modes (nombre total de modes = 3N où N est le nombre d'atomes de la structure).  
+Les 6 premiers modes = mouvement de structure rigide avec une valeur de 0.   
+les premiers modes avec une valeur de plus de 0 sont représentatifs des mouvements de la protéine(?).   __*Comment on peut savoir avec juste une structure? Plus d'info là-dessus à trouver*__   
+Sur le graphique, on voit peu de fluctuation entre ls résidus \~250 à \~550
+
+** _Voir si on peut faire un plus beau graphique_
+
+#### Analyse de plusieurs structures 
+
+Nous allons maintenant utiliser la fonction blast pour rechercher les structures homologue à notre protéine d'intérêt. Ensuite, nous avons sélectionner un cutoff de 50, ce qui représente une valeur de _e-value_.  
+
+```{r pdbs1.1, warning=FALSE}
+aa <- get.seq("P21554")
+blast <- blast.pdb(aa)
+hits <- plot.blast(blast, cutoff = 70)
+head(hits$pdb.id)
+```
+Dans le résultat du code, on voit les identifiant des 6 structures retenues (2 des structures sont présentes en double, donc on obtient 6 structures uniques)
+
+On peut maintenant télécharger et faire l'alignement de ces structures 
+```{r pdbs2, results='hide', warning=FALSE}
+files <- get.pdb(hits$pdb.id, path = "pdbs", split = TRUE, gzip = TRUE)
+pdbs <- pdbaln(files, fit=TRUE, web.args=list(email="anmayroy@gmail.com"))
+ids <- basename.pdb(pdbs$id)
+```
+```{r pdbs2.1}
+plot(pdbs, labels=ids)
+```
+Le graphique permet d'évaluer l'alignement général des différentes structures. 
+
+Avec la commande ci-dessous, onpeut extraire les annotations associées avec chaque structure et afficher les espèces sources. 
+```{r pdbs3, warning=FALSE}
+anno <- pdb.annotate(ids)
+print(unique(anno$source))
+```
+
+NMA sur toutes les structures
+```{r pdbs4, results='hide', warning=FALSE}
+modes <- nma(pdbs)
+```
+Structure-based clustering
+```{r pdbs5, results='hide', warning=FALSE}
+rd <- rmsd(pdbs)
+hc <- hclust(as.dist(rd))
+grps <- cutree(hc, k=3)
+```
+
+Pour obtenir un graphique de fluctuation avec trois clusters
+```{r pdbs6}
+plot(modes, pdbs, col=grps)
+```
+
+Dans ce dernier graphique, on peut observer plusieurs choses: 
+
+1- On ne conserve que les résidus 109 à \~400 dans l'analyse des fluctuations.  2- On observe une importante fluctuation environ au résidu 330 dans presque toutes les structures.  
+
+## À FAIRE: 
+Trouver comment l'analyse est différente entre 1 vs plusieurs structures.  
+Trouver qu'est-ce qui ce passe au résidu 330 pour cause une si grande fluctuation.  
+Pourquoi c'est si différent de l'analyse de la structure seule
+
+
+

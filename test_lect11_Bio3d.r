@@ -4,10 +4,7 @@
 ## Importation des library
 # install.packages("bio3d", dependencies=TRUE)
 library(bio3d)
-<<<<<<< HEAD
 library(tidyverse)
-=======
->>>>>>> 3e5c52817c690c709f9a1bd51aa3bb1cf564f9e1
 
 ##Référence: https://bioboot.github.io/bimm143_W18/class-material/lecture11-BIMM143_W18.pdf
 
@@ -38,11 +35,10 @@ ca.inds <- atom.select(pdb, "calpha", chain="A")
 cab.inds <- atom.select(pdb, elety=c("CA","CB"), chain="A", resno=10:20)
 b.inds <- atom.select(pdb, "back")
 backpdb <- trim.pdb(pdb, b.inds)
-<<<<<<< HEAD
+
 write.pdb(backpdb, file="6MSM_back.pdb")
-=======
 write.pdb(backpdb, file="46MSM_back.pdb")
->>>>>>> 3e5c52817c690c709f9a1bd51aa3bb1cf564f9e1
+
 
 backpdb <- trim.pdb(pdb, "backbone")
 backpdb <- atom.select(pdb, "backbone", value=TRUE)
@@ -134,7 +130,6 @@ p <- ggplot(df, aes(x, y)) +
 
 p ##On voit ici que la strucure 3GD7_A (et 6GJQ_A) cause la majorité de la variation. On devrait reprendre l'analyse en exculant cette valeur
 
-<<<<<<< HEAD
 pdbs2 <- trim(pdbs, row.inds = c(1:17, 19:20))
 ids2 <- basename.pdb(pdbs2$id)
 anno2 <- pdb.annotate(ids2)
@@ -167,15 +162,12 @@ p2 <- ggplot(df2, aes(x, y)) +
 p2
 
 
-
-=======
->>>>>>> 3e5c52817c690c709f9a1bd51aa3bb1cf564f9e1
 #PCA
 seqID <- seqidentity(pdbs) 
 rd <- rmsd(pdbs)
 hc <- hclust(as.dist(rd))
-grps <- cutree(hc, k=7)
-hclustplot(hc, k=7)
+grps <- cutree(hc, k=3)
+hclustplot(hc, k=3)
 pc <- pca(pdbs)
 plot(pc, col=grps) ##On voit ici que la strucure 3GD7_A et 6GJQ_A cause la majorité de la variation. On devrait reprendre l'analyse en exculant cette valeur
 
@@ -183,11 +175,8 @@ plot(pc, col=grps) ##On voit ici que la strucure 3GD7_A et 6GJQ_A cause la major
 modes <- nma(pdbs)
 plot(modes, pdbs, col=grps, spread=TRUE)
 
-<<<<<<< HEAD
 pdf("Présentaiton.pdf")
 p 
 p2 
 dev.off()
 
-=======
->>>>>>> 3e5c52817c690c709f9a1bd51aa3bb1cf564f9e1
