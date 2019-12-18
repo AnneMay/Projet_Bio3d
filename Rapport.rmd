@@ -1,0 +1,140 @@
+---
+title: "Bio3D"
+author: "Anne-Marie Roy"
+date: "17/12/2019"
+output: pdf_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(bio3d)
+library(tidyverse)
+```
+
+# Matériel et Méthodes 
+
+## Outils
+Bio3D offre différent outils pour manipuler les objets pdb contenant les structures des protéines. 
+
+```{r outils, eval=F}
+aa <- get.seq("P21554")
+
+blast <- blast.pdb(aa)
+
+hits <- plot.blast(blast, cutoff = 45)
+
+files <- get.pdb(hits$pdb.id, path = "pdbs", split = TRUE, gzip = TRUE)
+
+```
+Voici maintenant le graphique d'alignement obtenu à l'ai de MUSCLE 
+```{r alignement, eval=F}
+pdbs <- pdbaln(files, fit=TRUE, web.args=list(email="mon.email@gmail.com"))
+
+ids <- basename.pdb(pdbs$id)
+
+anno <- pdb.annotate(ids)
+
+ID <- gsub("crystal structure of the ", "", tolower(anno$structureTitle))
+ID <- gsub(".* crystal structure of the ", "", ID)
+ID <- gsub("crystal structure of ", "", ID)
+ID <- gsub("r 1 ", "r 1\n", ID)
+ID <- gsub("1 c", "1\n c", ID)
+
+annoID <- paste0(ids, "\n", ID)
+
+plot(pdbs, labels = annoID, mar4 = 14)
+```
+
+Nous voulons maintenant concentrer nos analyses sur la chaine R de la prot puisque c'est celle-ci qui est homologue aux structures trouvées par le blast 
+```{r trim, eval=F}
+pdb <- read.pdb("6N4B")
+
+sele <- atom.select(pdb, chain = "R")
+
+ca.pdb <- trim.pdb(pdb, sele)
+```
+
+Nous pouvons ensuite obtenir le coeur protéique
+```{r core, eval=F}
+# find invariant core
+
+core <- core.find(pdbs, outpath = "core", write.pdbs = T)
+
+core.inds <- print(core, vol = 1.0)
+
+#write.pdb(xyz = pdbs$xyz[1, core.inds$xyz], file = "64nb_core.pdb")
+
+#write.pdb(pdbs$xyz, file = "64nb_pdbs.pdb")
+
+# superimpose all structures to core
+
+pdbs$xyz = pdbfit(pdbs, core)
+```
+
+## PCA 
+```{r PCA, eval=F}
+pc <- pca.xyz(pdbs$xyz[,gaps.pos$f.inds], rm.gaps = T)
+
+plot(pc)
+
+##Clustering 
+# Calculate RMSD
+
+rd <- rmsd(pdbs)
+
+# Structure-based clustering
+
+hc.rd <- hclust(dist(pc$z[,1:2]))
+
+grps.rd <- cutree(hc.rd, h=90) 
+
+cols <- c("red", "green", "blue")[grps]
+
+plot(pc, col=cols)
+```
+
+```{r PCA resisdu, eval=F}
+plot.bio3d(pc$au[,1], resno=ref.pdb, sse=ref.pdb, ylab="PC1")
+
+plot.bio3d(pc$au[,2], resno=ref.pdb, sse=ref.pdb, ylab="PC2")
+
+plot.bio3d(pc$au[,3], resno=ref.pdb, sse=ref.pdb, ylab="PC3")
+```
+
+```{r trajectoire PCA, eval=FALSE}
+mktrj(pc, pc=1, file="pc_1.pdb")
+
+mktrj(pc, pc=2, file="pc_2.pdb")
+```
+
+## NMA 
+voici maintenant les commandes pour faire la NMA sur la structure de la chaine R 
+```{r NMA une structure, eval=F}
+modes.pdb <- nma(ca.pdb, ff="calpha")
+
+print(modes.pdb)
+
+plot(modes.pdb)
+
+mktrj(modes.pdb, mode=7, file = "6N4B_R_nma7_mktrj.pdb")
+
+mktrj(modes.pdb, mode=8, file = "6N4B_R_nma8_mktrj.pdb")
+
+mktrj(modes.pdb, mode=10, file = "6N4B_R_nma10_mktrj.pdb")
+```
+
+La NMA sur l'ensemble des structures alignées
+```{r NMA ensemble, eval=F}
+modes <- nma(pdbs)
+
+plot(modes, pdbs, col=grps)
+```
+
+## Analyses postérieures 
+```{r RMSIP, eval=F}
+r <- rmsip(modes.pdb, pc)
+
+mypalette<-brewer.pal(11,"GnBu")
+
+plot(r, xlab="NMA", ylab="PCA", col = mypalette, zlim = c(0, 0.2))
+```
